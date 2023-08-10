@@ -169,11 +169,11 @@
 
       let selectedDay = todayTimestamp;
 
-      const getNumberOfDays = (year, month) => {
+      function getNumberOfDays(year, month){
         return 40 - new Date(year, month, 40).getDate();
       };
 
-      const getDayDetails = (args) => {
+      function getDayDetails(args){
         let date = args.index - args.firstDay;
         let day = args.index % 7;
         let prevMonth = args.month - 1;
@@ -195,7 +195,7 @@
         };
       };
 
-      const getMonthDetails = (year, month) => {
+      function getMonthDetails(year, month){
         let firstDay = new Date(year, month).getDay();
         let numberOfDays = getNumberOfDays(year, month);
         let monthArray = [];
@@ -224,24 +224,25 @@
       let month = date.getMonth();
       let monthDetails = getMonthDetails(year, month);
 
-      const isCurrentDay = (day, cell) => {
+      function isCurrentDay(day, cell){
         if (day.timestamp === todayTimestamp) {
           cell.classList.add("active");
           cell.classList.add("isCurrent");
         }
       };
 
-      const isSelectedDay = (day, cell) => {
+      function isSelectedDay(day, cell){
         if (day.timestamp === selectedDay) {
           cell.classList.add("active");
           cell.classList.add("isSelected");
         }
       };
 
-      const getMonthStr = (month) =>
-        months[Math.max(Math.min(11, month), 0)] || "Month";
+      function getMonthStr (month){
+        return months[Math.max(Math.min(11, month), 0)] || "Month";
+      }
 
-      const setHeaderNav = (offset) => {
+      function setHeaderNav(offset){
         month = month + offset;
         if (month === -1) {
           month = 11;
@@ -258,23 +259,24 @@
         };
       };
 
-      const setHeader = (year, month) => {
+      function setHeader(year, month){
         calHeaderTitle.innerHTML = getMonthStr(month) + " " + year;
       };
 
       setHeader(year, month);
 
-      const getDateStringFromTimestamp = (timestamp) => {
+      function getDateStringFromTimestamp(timestamp){
         let dateObject = new Date(timestamp);
         let month = dateObject.getMonth();
         let date = dateObject.getDate();
         return `${getMonthStr(month)} ${date}, ${dateObject.getFullYear()}`;
       };
 
-      const setDateToInput = (timestamp) => {
+      function setDateToInput(timestamp){
         let dateString = getDateStringFromTimestamp(timestamp);
         input.value = dateString;
       };
+
       setDateToInput(todayTimestamp);
 
       for (let i = 0; i < days.length; i++) {
@@ -287,7 +289,7 @@
         calDays.appendChild(div);
       }
 
-      const setCalBody = (monthDetails) => {
+      function setCalBody(monthDetails){
         for (let i = 0; i < monthDetails.length; i++) {
           let div = document.createElement("div"),
               span = document.createElement("span");
@@ -352,7 +354,7 @@
       };
 
       setCalBody(monthDetails);
-      const updateCalendar = (btn) => {
+      function updateCalendar(btn){
         let newCal, offset;
         if (btn.classList.contains("calendar__btn-prev")) {
             offset = -1;
@@ -365,7 +367,7 @@
         setCalBody(newCal.monthDetails);
       };
 
-      const selectOnClick = (cell) => {
+      function selectOnClick(cell){
         const isActive = cell.classList.contains('active')
         Object.entries({
           'fifth-day': '_active-wek-fifth',
@@ -382,7 +384,7 @@
         document.querySelector('.cal_date.active').classList.remove('active')
       }
 
-      const updateInput = () => {
+      function updateInput(){
         let currentDay = document.querySelector(".isCurrent");
         document.querySelectorAll(".cell_wrapper").forEach((cell) => {
           if (cell.classList.contains("current")) {
