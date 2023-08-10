@@ -158,16 +158,17 @@
       const calHeaderTitle = document.querySelector(".calendar__header span");
       const calDays = document.querySelector(".calendar__days");
       const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-
       const months = ["Январь", "Февраль", "Март", "Апрель",
         "Май", "Июнь", "Июль", "Август",
         "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-
       let oneDay = 60 * 60 * 24 * 1000;
       let todayTimestamp = Date.now() - (Date.now() % oneDay) +
           new Date().getTimezoneOffset() * 1000 * 60;
-
       let selectedDay = todayTimestamp;
+      let date = new Date();
+      let year = date.getFullYear();
+      let month = date.getMonth();
+      let monthDetails = getMonthDetails(year, month);
 
       function getNumberOfDays(year, month){
         return 40 - new Date(year, month, 40).getDate();
@@ -219,10 +220,6 @@
         return monthArray;
       };
 
-      let date = new Date();
-      let year = date.getFullYear();
-      let month = date.getMonth();
-      let monthDetails = getMonthDetails(year, month);
 
       function isCurrentDay(day, cell){
         if (day.timestamp === todayTimestamp) {
