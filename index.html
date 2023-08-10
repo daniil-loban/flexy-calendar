@@ -152,6 +152,7 @@
       </div>
     </div>    
     <script type="text/javascript">
+      // 526
       const calendar = document.querySelector(".calendar__main");
       if (calendar) {
           const input = document.querySelector("#date");
@@ -429,42 +430,26 @@
           };
 
           // Only one calendar date is selected
-          const selectOnClick = () => {
-              document.querySelectorAll(".cell_wrapper").forEach((cell) => {
-                  cell.classList.contains("isSelected") && cell.classList.remove("active");
-                  if (cell) {
-                      cell.addEventListener("click", function (e) {
-                          const calendarItemFifth = document.querySelector('.cell_wrapper.cal_date.current.fifth-day.active');
-                          console.log(calendarItemFifth)
-                          if (calendarItemFifth) {
-                              document.documentElement.classList.add("_active-wek-fifth")
-                          } else {
-                              document.documentElement.classList.remove("_active-wek-fifth")
-                          }
-                          const calendarItemsSixth = document.querySelector('.cell_wrapper.cal_date.current.sixth-day.active.isSelected');
-                          console.log(calendarItemsSixth)
-                          if (calendarItemsSixth) {
-                              document.documentElement.classList.add("_active-wek-sixth")
-                          } else {
-                              document.documentElement.classList.remove("_active-wek-sixth")
-                          }
-                          const calendarItemSeventh = document.querySelector('.cell_wrapper.cal_date.current.seventh-day.active.isSelected');
-                          console.log(calendarItemSeventh)
-                          if (calendarItemSeventh) {
-                              document.documentElement.classList.add("_active-wek-seventh")
-                          } else {
-                              document.documentElement.classList.remove("_active-wek-seventh")
-                          }
-                      });
-
-                  }
-                  if (cell.classList.contains("isCurrent") &&
-                      !cell.classList.contains("active")) {
-                      cell.querySelector("span").classList.add("inactive_indicator");
-                  }
-              });
+          const selectOnClick = (cell) => {
+            const isActive = cell.classList.contains('active')
+            Object.entries({
+              'fifth-day': '_active-wek-fifth',
+              'sixth-day': '_active-wek-sixth',
+              'seventh-day': '_active-wek-seventh'
+             }).forEach(([k, v]) => {
+                const test = isActive && cell.classList.contains(k)
+                const action = test ? 'add' : 'remove'
+                document.documentElement.classList[action](v)
+             })
+              /* if (cell.classList.contains("isCurrent") &&
+                  !cell.classList.contains("active")) {
+                  cell.querySelector("span").classList.add("inactive_indicator");
+              } */
           };
 
+          function removeActive(){
+            document.querySelector('.cal_date.active').classList.remove('active')
+          }
 
           const updateInput = () => {
               let currentDay = document.querySelector(".isCurrent");
@@ -473,18 +458,18 @@
               document.querySelectorAll(".cell_wrapper").forEach((cell) => {
                   if (cell.classList.contains("current")) {
                       cell.addEventListener("click", (e) => {
+                          removeActive()
                           let cell_date = e.target.textContent;
-
                           currentDay !== null && currentDay.classList.remove("active");
-
                           for (let i = 0; i < monthDetails.length; i++) {
                               if (monthDetails[i].month === 0) {
                                   if (monthDetails[i].date.toString() === cell_date) {
                                       selectedDay = monthDetails[i].timestamp;
                                       setDateToInput(selectedDay);
-                                      selectOnClick();
-
                                       isSelectedDay(monthDetails[i], cell);
+                                      selectOnClick(cell);
+
+                                      
 
                                       cell.querySelector('span').classList.contains('inactive_indicator')
                                           && cell.querySelector('span').classList.remove('inactive_indicator');
