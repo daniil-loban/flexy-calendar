@@ -260,8 +260,6 @@
         calHeaderTitle.innerHTML = getMonthStr(month) + " " + year;
       };
 
-      setHeader(year, month);
-
       function getDateStringFromTimestamp(timestamp){
         let dateObject = new Date(timestamp);
         let month = dateObject.getMonth();
@@ -273,18 +271,6 @@
         let dateString = getDateStringFromTimestamp(timestamp);
         input.value = dateString;
       };
-
-      setDateToInput(todayTimestamp);
-
-      for (let i = 0; i < days.length; i++) {
-        let div = document.createElement("div"),
-            span = document.createElement("span");
-        div.classList.add("cell_wrapper");
-        span.classList.add("cell_item");
-        span.innerText = days[i].slice(0, 2);
-        div.appendChild(span);
-        calDays.appendChild(div);
-      }
 
       function setCalBody(monthDetails){
         for (let i = 0; i < monthDetails.length; i++) {
@@ -350,7 +336,6 @@
         }
       };
 
-      setCalBody(monthDetails);
       function updateCalendar(btn){
         let newCal, offset;
         if (btn.classList.contains("calendar__btn-prev")) {
@@ -406,30 +391,45 @@
         });
       };
 
-      updateInput();
+      function init(){
+        setHeader(year, month);
+        setDateToInput(todayTimestamp);
+        setCalBody(monthDetails);
+        updateInput();
 
-      document.querySelectorAll(".calendar-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          updateCalendar(btn);
-          updateInput();
-        });
-      });
-
-      input.addEventListener('click', () => {
-        document.querySelector('.calendar__content').classList.toggle('hidden');
-        document.querySelector('.calendar__input').classList.toggle('showCal');
-        document.querySelector('#date').classList.toggle('onFocus');
-      });
-
-      window.addEventListener('click', e => {
-        const target = e.target
-        if (!target.closest('#date') && !target.closest('.calendar__input') && !target.closest('.calendar__content')) {
-          document.querySelector('.calendar__content').classList.add('hidden');
-          document.querySelector('.calendar__input').classList.remove('showCal');
-          document.querySelector('#date').classList.add('onFocus');
+        for (let i = 0; i < days.length; i++) {
+          let div = document.createElement("div"),
+              span = document.createElement("span");
+          div.classList.add("cell_wrapper");
+          span.classList.add("cell_item");
+          span.innerText = days[i].slice(0, 2);
+          div.appendChild(span);
+          calDays.appendChild(div);
         }
-      })
 
+        document.querySelectorAll(".calendar-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            updateCalendar(btn);
+            updateInput();
+          });
+        });
+
+        input.addEventListener('click', () => {
+          document.querySelector('.calendar__content').classList.toggle('hidden');
+          document.querySelector('.calendar__input').classList.toggle('showCal');
+          document.querySelector('#date').classList.toggle('onFocus');
+        });
+
+        window.addEventListener('click', e => {
+          const target = e.target
+          if (!target.closest('#date') && !target.closest('.calendar__input') && !target.closest('.calendar__content')) {
+            document.querySelector('.calendar__content').classList.add('hidden');
+            document.querySelector('.calendar__input').classList.remove('showCal');
+            document.querySelector('#date').classList.add('onFocus');
+          }
+        })
+      }
+      init()
     </script>
   </body>
 </html>
