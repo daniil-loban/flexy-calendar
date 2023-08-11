@@ -161,17 +161,20 @@
       const months = ["Январь", "Февраль", "Март", "Апрель",
         "Май", "Июнь", "Июль", "Август",
         "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-      let oneDay = 60 * 60 * 24 * 1000;
-      let todayTimestamp = Date.now() - (Date.now() % oneDay) +
-          new Date().getTimezoneOffset() * 1000 * 60;
-      let selectedDay = todayTimestamp;
+      const MAX_MONTH_LEN = 31
+
+      let oneDayMs = 86400000;
+      let todayTimestampMs = Date.now() - (Date.now() % oneDayMs) +
+          new Date().getTimezoneOffset() * 60000;
+      let selectedDay = todayTimestampMs;
       let date = new Date();
       let year = date.getFullYear();
       let month = date.getMonth();
       let monthDetails = getMonthDetails(year, month);
 
+
       function getNumberOfDays(year, month){
-        return 40 - new Date(year, month, 40).getDate();
+        return (MAX_MONTH_LEN + 1) - new Date(year, month, (MAX_MONTH_LEN + 1)).getDate();
       };
 
       function getDayDetails(args){
@@ -200,7 +203,7 @@
         let firstDay = new Date(year, month).getDay();
         let numberOfDays = getNumberOfDays(year, month);
         let monthArray = [];
-        let rows = 5;
+        let rows = 6;
         let currentDay = null;
         let index = 0;
         let cols = 7;
@@ -222,7 +225,7 @@
 
 
       function isCurrentDay(day, cell){
-        if (day.timestamp === todayTimestamp) {
+        if (day.timestamp === todayTimestampMs) {
           cell.classList.add("active");
           cell.classList.add("isCurrent");
         }
@@ -274,65 +277,11 @@
 
       function setCalBody(monthDetails){
         for (let i = 0; i < monthDetails.length; i++) {
-          let div = document.createElement("div"),
-              span = document.createElement("span");
-
-          div.classList.add("cell_wrapper");
-          div.classList.add("cal_date");
-          monthDetails[i].month === 0 && div.classList.add("current");
-          monthDetails[i].month === 0 && isCurrentDay(monthDetails[i], div);
-          span.classList.add("cell_item");
-          var fifth_1 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(5)")
-          fifth_1.forEach(five => {
-              five.classList.add("fifth-day");
-          });
-          var fifth_2 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(12)")
-          fifth_2.forEach(five => {
-              five.classList.add("fifth-day");
-          });
-          var fifth_3 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(19)")
-          fifth_3.forEach(five => {
-              five.classList.add("fifth-day");
-          });
-          var fifth_4 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(26)")
-          fifth_4.forEach(five => {
-              five.classList.add("fifth-day");
-          });
-          var fifth_5 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(33)")
-          fifth_5.forEach(five => {
-              five.classList.add("fifth-day");
-          });
-
-          var sixth_1 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(6)")
-          sixth_1.forEach(six => {
-              six.classList.add("sixth-day");
-          });
-          var sixth_2 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(13)")
-          sixth_2.forEach(six => {
-              six.classList.add("sixth-day");
-          });
-          var sixth_3 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(20)")
-          sixth_3.forEach(six => {
-              six.classList.add("sixth-day");
-          });
-          var sixth_4 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(27)")
-          sixth_4.forEach(six => {
-              six.classList.add("sixth-day");
-          });
-          var sixth_5 = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(34)")
-          sixth_5.forEach(six => {
-              six.classList.add("sixth-day");
-          });
-
-          var seventh = document.querySelectorAll(".calendar__main .cell_wrapper.cal_date:nth-child(7n)")
-          seventh.forEach(seven => {
-              seven.classList.add("seventh-day");
-          });
-
+          const div = calendar.children[i]
+          const span = div.children[0]
+          const action = monthDetails[i].month === 0 ? 'add' : 'remove'
+          div.classList[action]("current");
           span.innerText = monthDetails[i].date;
-
-          div.appendChild(span);
-          calendar.appendChild(div);
         }
       };
 
@@ -345,18 +294,20 @@
         }
         newCal = setHeaderNav(offset);
         setHeader(newCal.year, newCal.month);
-        calendar.innerHTML = "";
+        //calendar.innerHTML = "";
         setCalBody(newCal.monthDetails);
       };
 
       function selectOnClick(cell){
         const isActive = cell.classList.contains('active')
+        const index = Array.from(calendar.children).findIndex((el) => el === cell) 
+        const dayOfWeek = `${index % 7}`
         Object.entries({
-          'fifth-day': '_active-wek-fifth',
-          'sixth-day': '_active-wek-sixth',
-          'seventh-day': '_active-wek-seventh'
+          '4': '_active-wek-fifth',
+          '5': '_active-wek-sixth',
+          '6': '_active-wek-seventh'
           }).forEach(([k, v]) => {
-            const test = isActive && cell.classList.contains(k)
+            const test = isActive && dayOfWeek === k
             const action = test ? 'add' : 'remove'
             document.documentElement.classList[action](v)
           })
@@ -391,10 +342,29 @@
         });
       };
 
+
+      function setDaysPlaceholders(monthDetails){
+        for (let i = 0; i < monthDetails.length; i++) {
+          let div = document.createElement("div"),
+              span = document.createElement("span");
+          div.classList.add("cell_wrapper");
+          div.classList.add("cal_date");
+          monthDetails[i].month === 0 && div.classList.add("current");
+          monthDetails[i].month === 0 && isCurrentDay(monthDetails[i], div);
+          span.classList.add("cell_item");
+          span.innerText = monthDetails[i].date;
+          div.appendChild(span);
+          calendar.appendChild(div);
+        }
+      };
+
+
       function init(){
         setHeader(year, month);
-        setDateToInput(todayTimestamp);
-        setCalBody(monthDetails);
+        setDateToInput(todayTimestampMs);
+
+        //setCalBody(monthDetails);
+        setDaysPlaceholders(monthDetails)
         updateInput();
 
         for (let i = 0; i < days.length; i++) {
