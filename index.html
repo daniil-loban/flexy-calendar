@@ -162,7 +162,6 @@
         "Май", "Июнь", "Июль", "Август",
         "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
       const MAX_MONTH_LEN = 31
-
       let oneDayMs = 86400000;
       let todayTimestampMs = Date.now() - (Date.now() % oneDayMs) +
           new Date().getTimezoneOffset() * 60000;
@@ -171,7 +170,25 @@
       let year = date.getFullYear();
       let month = date.getMonth();
       let monthDetails = getMonthDetails(year, month);
+      const state = {
+        selected: {
+          date: date.getDate(), 
+          month,
+          year,
+          cell: null
+        },
+        current:{
+          month,
+          year,
+        }
+      } 
 
+      function updateState(cell){
+        state.selected.month = state.current.month
+        state.selected.year = state.current.year
+        state.selected.date = +cell.innerText
+        state.selected.cell = cell
+      }
 
       function getNumberOfDays(year, month){
         return (MAX_MONTH_LEN + 1) - new Date(year, month, (MAX_MONTH_LEN + 1)).getDate();
@@ -223,21 +240,6 @@
         return monthArray;
       };
 
-
-      function isCurrentDay(day, cell){
-        if (day.timestamp === todayTimestampMs) {
-          cell.classList.add("active");
-          cell.classList.add("isCurrent");
-        }
-      };
-
-      function isSelectedDay(day, cell){
-        if (day.timestamp === selectedDay) {
-          cell.classList.add("active");
-          cell.classList.add("isSelected");
-        }
-      };
-
       function getMonthStr (month){
         return months[Math.max(Math.min(11, month), 0)] || "Month";
       }
@@ -283,6 +285,7 @@
           div.classList[action]("current");
           span.innerText = monthDetails[i].date;
         }
+        showSelectedCellIfNeed()
       };
 
       function updateCalendar(btn){
@@ -294,11 +297,14 @@
         }
         newCal = setHeaderNav(offset);
         setHeader(newCal.year, newCal.month);
-        //calendar.innerHTML = "";
+        state.current.month = newCal.month
+        state.current.year = newCal.year
         setCalBody(newCal.monthDetails);
       };
 
       function selectOnClick(cell){
+        if (!cell) return
+        updateState(cell)
         const isActive = cell.classList.contains('active')
         const index = Array.from(calendar.children).findIndex((el) => el === cell) 
         const dayOfWeek = `${index % 7}`
@@ -314,34 +320,21 @@
       };
 
       function removeActive(){
-        document.querySelector('.cal_date.active').classList.remove('active')
+        document.querySelector('.cal_date.active')?.classList.remove('active')
       }
 
-      function updateInput(){
-        let currentDay = document.querySelector(".isCurrent");
-        document.querySelectorAll(".cell_wrapper").forEach((cell) => {
-          if (cell.classList.contains("current")) {
-            cell.addEventListener("click", (e) => {
-              removeActive()
-              let cell_date = e.target.textContent;
-              currentDay !== null && currentDay.classList.remove("active");
-              for (let i = 0; i < monthDetails.length; i++) {
-                if (monthDetails[i].month === 0) {
-                  if (monthDetails[i].date.toString() === cell_date) {
-                    selectedDay = monthDetails[i].timestamp;
-                    setDateToInput(selectedDay);
-                    isSelectedDay(monthDetails[i], cell);
-                    selectOnClick(cell);
-                    cell.querySelector('span').classList.contains('inactive_indicator')
-                        && cell.querySelector('span').classList.remove('inactive_indicator');
-                  }
-                }
-              }
-            });
-          }
-        });
-      };
+      function setActive(cell){
+        cell?.classList.add('active')
+      }
 
+      function addListenerToCalendar(){
+        calendar.addEventListener('click', ({target}) => {
+          removeActive()
+          const cell = target.closest('.cal_date')
+          setActive(cell)
+          selectOnClick(cell);
+        }) 
+      }
 
       function setDaysPlaceholders(monthDetails){
         for (let i = 0; i < monthDetails.length; i++) {
@@ -349,8 +342,15 @@
               span = document.createElement("span");
           div.classList.add("cell_wrapper");
           div.classList.add("cal_date");
-          monthDetails[i].month === 0 && div.classList.add("current");
-          monthDetails[i].month === 0 && isCurrentDay(monthDetails[i], div);
+          
+          if(monthDetails[i].month === 0){
+            div.classList.add("current");
+            if (monthDetails[i].timestamp === todayTimestampMs) {
+              setActive(div)
+              state.selected.cell = div
+            }  
+          }
+          
           span.classList.add("cell_item");
           span.innerText = monthDetails[i].date;
           div.appendChild(span);
@@ -358,14 +358,19 @@
         }
       };
 
+      function showSelectedCellIfNeed(){
+        const action = (
+          state.selected.month === state.current.month
+          && state.selected.year === state.current.year
+        ) ? 'add' : 'remove'
+        state.selected.cell.classList[action]('active')
+      }
 
       function init(){
         setHeader(year, month);
         setDateToInput(todayTimestampMs);
-
-        //setCalBody(monthDetails);
         setDaysPlaceholders(monthDetails)
-        updateInput();
+        addListenerToCalendar()
 
         for (let i = 0; i < days.length; i++) {
           let div = document.createElement("div"),
@@ -380,7 +385,6 @@
         document.querySelectorAll(".calendar-btn").forEach((btn) => {
           btn.addEventListener("click", () => {
             updateCalendar(btn);
-            updateInput();
           });
         });
 
