@@ -157,154 +157,128 @@
       const calHeader = document.querySelector(".calendar__header");
       const calHeaderTitle = document.querySelector(".calendar__header span");
       const calDays = document.querySelector(".calendar__days");
-      const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-      const months = ["Январь", "Февраль", "Март", "Апрель",
+      
+      const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+      const MONTH_NAMES = ["Январь", "Февраль", "Март", "Апрель",
         "Май", "Июнь", "Июль", "Август",
         "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
       const MAX_MONTH_LEN = 31
-      let oneDayMs = 86400000;
-      let todayTimestampMs = Date.now() - (Date.now() % oneDayMs) +
-          new Date().getTimezoneOffset() * 60000;
-      let selectedDay = todayTimestampMs;
-      let date = new Date();
-      let year = date.getFullYear();
-      let month = date.getMonth();
-      let monthDetails = getMonthDetails(year, month);
-      const state = {
-        selected: {
-          date: date.getDate(), 
-          month,
-          year,
-          cell: null
-        },
-        current:{
-          month,
-          year,
-        }
-      } 
+      const MONTH_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];  
+      const MONTHS_IN_YEAR = 12
+      const CELLS = 42
+      const JAN = 0, FEB = 1, DEC = 11
+      const PREV = -1, NEXT = 1, CURRENT = 0
+      
+      const getNumbers = size => Array.from(Array(size)).map((_, i) => i + 1)
+      const getTail = (arr, size) => arr.slice(-size)
+      const getHead = (arr, size) => arr.slice(0, size)
+      
+      const state = {} 
+      const INIT_STATE = 'INIT_STATE'
+      const SELECT_DATE = 'SELECT_DATE'
+      const SHIFT_MONTH = 'SHIFT_MONTH'
 
-      function updateState(cell){
-        state.selected.month = state.current.month
-        state.selected.year = state.current.year
-        state.selected.date = +cell.innerText
-        state.selected.cell = cell
-      }
-
-      function getNumberOfDays(year, month){
-        return (MAX_MONTH_LEN + 1) - new Date(year, month, (MAX_MONTH_LEN + 1)).getDate();
-      };
-
-      function getDayDetails(args){
-        let date = args.index - args.firstDay;
-        let day = args.index % 7;
-        let prevMonth = args.month - 1;
-        let prevYear = args.year;
-        if (prevMonth < 0) {
-          prevMonth = 11;
-          prevYear--;
-        }
-        let prevMonthNumberOfDays = getNumberOfDays(prevYear, prevMonth);
-        let _date = (date < 0 ? prevMonthNumberOfDays + date : date % args.numberOfDays) + 1;
-        let month = date < 0 ? -1 : date >= args.numberOfDays ? 1 : 0;
-        let timestamp = new Date(args.year, args.month, _date).getTime();
-        return {
-          date: _date,
-          day,
-          month,
-          timestamp,
-          dayString: days[day]
-        };
-      };
-
-      function getMonthDetails(year, month){
-        let firstDay = new Date(year, month).getDay();
-        let numberOfDays = getNumberOfDays(year, month);
-        let monthArray = [];
-        let rows = 6;
-        let currentDay = null;
-        let index = 0;
-        let cols = 7;
-        for (let row = 0; row < rows; row++) {
-          for (let col = 0; col < cols; col++) {
-            currentDay = getDayDetails({
-                index,
-                numberOfDays,
-                firstDay,
+      function updateState(action, payload){
+        switch(action){
+          case INIT_STATE: {
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            state.current = { month, year }
+            state.selected = {
+                date: date.getDate(), 
+                month,
                 year,
-                month
-            });
-            monthArray.push(currentDay);
-            index++;
+                cell: null
+            }
+            break 
+          }
+          case SELECT_DATE: {
+            const cell = payload
+            state.selected.month = state.current.month
+            state.selected.year = state.current.year
+            state.selected.date = +cell.innerText
+            state.selected.cell = cell
+            break
+          }
+          case SHIFT_MONTH: {
+            const offset = payload
+            const {year, month} = getNearbyMonth(offset)
+            state.current.month = month
+            state.current.year = year            
           }
         }
-        return monthArray;
-      };
-
-      function getMonthStr (month){
-        return months[Math.max(Math.min(11, month), 0)] || "Month";
       }
 
-      function setHeaderNav(offset){
-        month = month + offset;
-        if (month === -1) {
-          month = 11;
-          year--;
-        } else if (month === 12) {
-          month = 0;
-          year++;
+      function getSizeOfMonth({year, month}) {
+        const getSizeOfFeb = year => MAX_MONTH_LEN -
+          new Date(year, FEB, MONTH_DAYS[FEB]).getMonth() - 1 
+        return month === FEB 
+          ? getSizeOfFeb(year) : MONTH_DAYS[month]
+      } 
+
+      function getNearbyMonth(offset){
+        let {year, month} = state.current
+        if (offset < 0) {
+          year += month === JAN ? PREV : CURRENT
+          month = (MONTHS_IN_YEAR + month + PREV) % MONTHS_IN_YEAR
+        } else if (offset > 0){
+          year += month === DEC ? NEXT : CURRENT
+          month = (MONTHS_IN_YEAR + month + NEXT) % MONTHS_IN_YEAR
         }
-        monthDetails = getMonthDetails(year, month);
-        return {
-          year,
-          month,
-          monthDetails
-        };
+        return {year, month}
+      }  
+
+      function setCalendarHeader(){
+        const {month, year} = state.current
+        calHeaderTitle.innerHTML = `${MONTH_NAMES[month]} ${year}` 
       };
 
-      function setHeader(year, month){
-        calHeaderTitle.innerHTML = getMonthStr(month) + " " + year;
+      function getCalendarCellsData() {
+        const {year, month} = state.current
+        const date = new Date(year, month, 1)
+        const size = getSizeOfMonth({year, month})
+        const prevSize = getSizeOfMonth(getNearbyMonth(PREV))
+        const nextSize = getSizeOfMonth(getNearbyMonth(NEXT))
+        const prevMonth = getTail(getNumbers(prevSize), date.getDay())
+        const currMonth = getNumbers(size)
+        const nextMonth = getHead(getNumbers(nextSize), 
+          CELLS - (prevMonth.length + currMonth.length))
+        return [...prevMonth, ...currMonth, ...nextMonth]
+      }
+
+      function setDateToInput(){
+        const {year, month, date} = state.selected  
+        input.value = `${MONTH_NAMES[month]} ${date}, ${year}`
       };
 
-      function getDateStringFromTimestamp(timestamp){
-        let dateObject = new Date(timestamp);
-        let month = dateObject.getMonth();
-        let date = dateObject.getDate();
-        return `${getMonthStr(month)} ${date}, ${dateObject.getFullYear()}`;
-      };
-
-      function setDateToInput(timestamp){
-        let dateString = getDateStringFromTimestamp(timestamp);
-        input.value = dateString;
-      };
-
-      function setCalBody(monthDetails){
-        for (let i = 0; i < monthDetails.length; i++) {
+      function setCalendarBody(){
+        const data = getCalendarCellsData()
+        for (let i = 0; i < CELLS; i++) { 
           const div = calendar.children[i]
           const span = div.children[0]
-          const action = monthDetails[i].month === 0 ? 'add' : 'remove'
+          const action = isCurrentMonthCell(data, i) ? 'add' : 'remove'
           div.classList[action]("current");
-          span.innerText = monthDetails[i].date;
+          span.innerText = data[i]
         }
         showSelectedCellIfNeed()
       };
 
-      function updateCalendar(btn){
-        let newCal, offset;
+      function changeMonth(btn){
+        let offset;
         if (btn.classList.contains("calendar__btn-prev")) {
-            offset = -1;
+            offset = PREV;
         } else if (btn.classList.contains("calendar__btn-next")) {
-            offset = 1;
+            offset = NEXT;
         }
-        newCal = setHeaderNav(offset);
-        setHeader(newCal.year, newCal.month);
-        state.current.month = newCal.month
-        state.current.year = newCal.year
-        setCalBody(newCal.monthDetails);
+        updateState(SHIFT_MONTH, offset)
+        updateCalendarUI()
       };
 
       function selectOnClick(cell){
         if (!cell) return
-        updateState(cell)
+        updateState(SELECT_DATE, cell)
+        setDateToInput()
         const isActive = cell.classList.contains('active')
         const index = Array.from(calendar.children).findIndex((el) => el === cell) 
         const dayOfWeek = `${index % 7}`
@@ -336,23 +310,29 @@
         }) 
       }
 
+      function isCurrentMonthCell(arr, i){
+        const half = CELLS/2
+        const isBigNumberAtBegin = i < 7 && arr[i] > half
+        const isSmallNumberAtEnd = i > 28 && arr[i] < half
+        return !(isBigNumberAtBegin || isSmallNumberAtEnd)
+      }
+
       function setDaysPlaceholders(monthDetails){
-        for (let i = 0; i < monthDetails.length; i++) {
+        const data = getCalendarCellsData()
+        for (let i = 0; i < CELLS; i++) {
           let div = document.createElement("div"),
               span = document.createElement("span");
           div.classList.add("cell_wrapper");
           div.classList.add("cal_date");
-          
-          if(monthDetails[i].month === 0){
+          if(isCurrentMonthCell(data, i)){
             div.classList.add("current");
-            if (monthDetails[i].timestamp === todayTimestampMs) {
+            if (state.selected.date === data[i]){
               setActive(div)
               state.selected.cell = div
             }  
           }
-          
           span.classList.add("cell_item");
-          span.innerText = monthDetails[i].date;
+          span.innerText = data[i]
           div.appendChild(span);
           calendar.appendChild(div);
         }
@@ -366,25 +346,34 @@
         state.selected.cell.classList[action]('active')
       }
 
-      function init(){
-        setHeader(year, month);
-        setDateToInput(todayTimestampMs);
-        setDaysPlaceholders(monthDetails)
-        addListenerToCalendar()
+      function updateCalendarUI(){
+        setCalendarHeader();
+        setCalendarBody();
+      }
 
-        for (let i = 0; i < days.length; i++) {
+      function setCalendarDays(){
+        for (let i = 0; i < DAY_NAMES.length; i++) {
           let div = document.createElement("div"),
               span = document.createElement("span");
           div.classList.add("cell_wrapper");
           span.classList.add("cell_item");
-          span.innerText = days[i].slice(0, 2);
+          span.innerText = DAY_NAMES[i].slice(0, 2);
           div.appendChild(span);
           calDays.appendChild(div);
-        }
+        }        
+      }
+
+      function init(){
+        updateState(INIT_STATE)
+        setDateToInput();
+        setCalendarDays()
+        setCalendarHeader();
+        setDaysPlaceholders()
+        addListenerToCalendar()
 
         document.querySelectorAll(".calendar-btn").forEach((btn) => {
           btn.addEventListener("click", () => {
-            updateCalendar(btn);
+            changeMonth(btn);
           });
         });
 
@@ -396,7 +385,9 @@
 
         window.addEventListener('click', e => {
           const target = e.target
-          if (!target.closest('#date') && !target.closest('.calendar__input') && !target.closest('.calendar__content')) {
+          if (!target.closest('#date') 
+            && !target.closest('.calendar__input') 
+            && !target.closest('.calendar__content')) {
             document.querySelector('.calendar__content').classList.add('hidden');
             document.querySelector('.calendar__input').classList.remove('showCal');
             document.querySelector('#date').classList.add('onFocus');
