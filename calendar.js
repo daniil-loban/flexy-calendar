@@ -15,9 +15,7 @@
       <div class="calendar__main"></div>
     </div>
   </div>
-  </div>    
-  `
-     
+  </div>`
   const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const MONTH_NAMES = ["Январь", "Февраль", "Март", "Апрель",
     "Май", "Июнь", "Июль", "Август",
@@ -32,7 +30,8 @@
   const getNumbers = size => Array.from(Array(size)).map((_, i) => i + 1)
   const getTail = (arr, size) => arr.slice(-size)
   const getHead = (arr, size) => arr.slice(0, size)
-  
+  const getRolledIndex = (size, index) => (size + index) %  size
+
   const state = {} 
   const INIT_STATE = 'INIT_STATE'
   const SELECT_DATE = 'SELECT_DATE'
@@ -40,7 +39,6 @@
   
   let calendar = null
   let input = null
-  let calHeader = null
   let calHeaderTitle = null
   let calDays = null
 
@@ -75,30 +73,29 @@
       }
     }
   }
+
+  function incudeClassByCondition(element, className, condition){
+    const action = condition ? 'add' : 'remove'
+    element.classList[action](className);
+  }
   
   function getSizeOfMonth({year, month}) {
     const getSizeOfFeb = year => MAX_MONTH_LEN -
       new Date(year, FEB, MONTH_DAYS[FEB]).getMonth() - 1 
-    return month === FEB 
-      ? getSizeOfFeb(year) : MONTH_DAYS[month]
+    return month === FEB  ? getSizeOfFeb(year) : MONTH_DAYS[month]
   } 
   
   function getNearbyMonth(offset){
     let {year, month} = state.current
     if (offset < 0) {
       year += month === JAN ? PREV : CURRENT
-      month = (MONTHS_IN_YEAR + month + PREV) % MONTHS_IN_YEAR
+      month = getRolledIndex(MONTHS_IN_YEAR, month + PREV)
     } else if (offset > 0){
       year += month === DEC ? NEXT : CURRENT
-      month = (MONTHS_IN_YEAR + month + NEXT) % MONTHS_IN_YEAR
+      month = getRolledIndex(MONTHS_IN_YEAR, month + PREV)
     }
     return {year, month}
   }  
-  
-  function setCalendarHeader(){
-    const {month, year} = state.current
-    calHeaderTitle.innerHTML = `${MONTH_NAMES[month]} ${year}` 
-  };
   
   function getCalendarCellsData() {
     const {year, month} = state.current
@@ -106,11 +103,11 @@
     const size = getSizeOfMonth({year, month})
     const prevSize = getSizeOfMonth(getNearbyMonth(PREV))
     const nextSize = getSizeOfMonth(getNearbyMonth(NEXT))
-    const prevMonth = getTail(getNumbers(prevSize), date.getDay())
-    const currMonth = getNumbers(size)
-    const nextMonth = getHead(getNumbers(nextSize), 
-      CELLS - (prevMonth.length + currMonth.length))
-    return [...prevMonth, ...currMonth, ...nextMonth]
+    const prevMonthNumbers = getTail(getNumbers(prevSize), date.getDay())
+    const currMonthNumbers = getNumbers(size)
+    const nextMonthNumbers = getHead(getNumbers(nextSize), 
+      CELLS - (prevMonthNumbers.length + currMonthNumbers.length))
+    return [...prevMonthNumbers, ...currMonthNumbers, ...nextMonthNumbers]
   }
   
   function setDateToInput(){
@@ -118,26 +115,28 @@
     input.value = `${MONTH_NAMES[month]} ${date}, ${year}`
   };
   
+  function setCalendarHeader(){
+    const {month, year} = state.current
+    calHeaderTitle.innerHTML = `${MONTH_NAMES[month]} ${year}` 
+  };
+  
   function setCalendarBody(){
     const data = getCalendarCellsData()
     for (let i = 0; i < CELLS; i++) { 
       const div = calendar.children[i]
       const span = div.children[0]
-      const action = isCurrentMonthCell(data, i) ? 'add' : 'remove'
-      div.classList[action]("current");
+      incudeClassByCondition(div, 'current', getOffsetMonth(data, i) === CURRENT)
       span.innerText = data[i]
     }
     showSelectedCellIfNeed()
   };
   
   function changeMonth(btn){
-    let offset;
     if (btn.classList.contains("calendar__btn-prev")) {
-        offset = PREV;
+      updateState(SHIFT_MONTH, PREV)
     } else if (btn.classList.contains("calendar__btn-next")) {
-        offset = NEXT;
+      updateState(SHIFT_MONTH, NEXT)
     }
-    updateState(SHIFT_MONTH, offset)
     updateCalendarUI()
   };
   
@@ -167,11 +166,13 @@
     }) 
   }
   
-  function isCurrentMonthCell(arr, i){
+  function getOffsetMonth(arr, i){
     const half = CELLS/2
     const isBigNumberAtBegin = i < 7 && arr[i] > half
     const isSmallNumberAtEnd = i > 28 && arr[i] < half
-    return !(isBigNumberAtBegin || isSmallNumberAtEnd)
+    if (isBigNumberAtBegin) return PREV
+    else if (isSmallNumberAtEnd) return NEXT
+    return CURRENT
   }
   
   function setDaysPlaceholders(monthDetails){
@@ -181,7 +182,7 @@
           span = document.createElement("span");
       div.classList.add("cell_wrapper");
       div.classList.add("cal_date");
-      if(isCurrentMonthCell(data, i)){
+      if(getOffsetMonth(data, i) === CURRENT){
         div.classList.add("current");
         if (state.selected.date === data[i]){
           setActive(div)
@@ -196,11 +197,11 @@
   };
   
   function showSelectedCellIfNeed(){
-    const action = (
+    incudeClassByCondition(
+      state.selected.cell, 'active',  
       state.selected.month === state.current.month
-      && state.selected.year === state.current.year
-    ) ? 'add' : 'remove'
-    state.selected.cell.classList[action]('active')
+        && state.selected.year === state.current.year
+    )
   }
   
   function updateCalendarUI(){
@@ -223,7 +224,6 @@
   function setHTMLElements(){
     calendar = document.querySelector(".calendar__main");
     input = document.querySelector("#date");
-    calHeader = document.querySelector(".calendar__header");
     calHeaderTitle = document.querySelector(".calendar__header span");
     calDays = document.querySelector(".calendar__days");
   }
@@ -247,7 +247,7 @@
       document.querySelector('.calendar__input').classList.toggle('showCal');
       document.querySelector('#date').classList.toggle('onFocus');
     });
-  
+    
     window.addEventListener('click', e => {
       const target = e.target
       if (!target.closest('#date') 
@@ -259,11 +259,10 @@
       }
     })
   }
-  //init()
+
   window.createCalendar = function(id){
     document.getElementById(id).outerHTML = template
     setHTMLElements()
     init()
   }
-}()) 
-
+}())
