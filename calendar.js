@@ -1,13 +1,15 @@
 (function() {
-const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const DAY_NAMES = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 const MONTH_NAMES = ["Январь", "Февраль", "Март", "Апрель",
   "Май", "Июнь", "Июль", "Август",
   "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 const MAX_MONTH_LEN = 31
 const MONTH_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];  
-const MONTHS_IN_YEAR = 12
+const MONTHS_IN_YEAR = MONTH_DAYS.length
 const CELLS = 42
 const JAN = 0, FEB = 1, DEC = 11
+const SUNDAY=0, MONDAY=1, WEDNESDAY = 3
+const FIRST_WEEK_DAY = WEDNESDAY
 const PREV = -1, NEXT = 1, CURRENT = 0
 const getNumbers = size => Array.from(Array(size)).map((_, i) => i + 1)
 const getTail = (arr, size) => arr.slice(-size)
@@ -16,6 +18,8 @@ const getRolledIndex = (size, index) => (size + index) %  size
 const INIT_STATE = 'INIT_STATE'
 const SELECT_DATE = 'SELECT_DATE'
 const SHIFT_MONTH = 'SHIFT_MONTH'
+const SET_DATE = 'SET_DATE'
+const SET_CELLS_DATA = 'SET_CELLS_DATA'
 
 class FlexyCalendar extends HTMLElement {
   constructor() {
@@ -28,132 +32,100 @@ class FlexyCalendar extends HTMLElement {
     .calendar{
       position: relative;
     }
-    .calendar__input {
-      position: relative;
-      cursor: pointer;
-      width: 100%;
-    }
     .calendar__input input {
+      position: relative;
+      width: calc(100% - 5px);
       cursor: pointer;
-        width: 100%;
-    }
-    .calendar__input input._form-focus {
-      border: 1px solid #ebebeb;
-    }
-    .calendar__input.showCal input {
-      border: 1px solid green;
-    }
-    .calendar__input.showCal::before {
-      color: green;
-    }
-    .calendar__input::before {
-      position: absolute;
-      right: 20px;
-      font-size: 20px;
-      color: #afafaf;
-      top: 50%;
-      transform: translate(0, -50%);
-      pointer-events: none;
+      outline: none;
     }
     .calendar__content {
       position: absolute;
-      z-index: 40;
+      z-index: 1;
       right: 0;
       padding: 25px;
-      top: 99%;
       width: auto;
       background: #f8f8f8;
-      border: 1px solid green;
-      border-radius: 2px;
+      box-shadow: 1px 1px 5px gray;
     }
     .calendar__header {
       display: flex;
       align-items: center;
-      font-weight: 400;
+      font-weight: 500;
       font-size: 16px;
       margin: 0px 0px 24px 0px;
     }
     .calendar__header span {
       flex: 1 1 auto;
     }
-    .calendar__btn-prev {
-      width: 24px;
-      height: 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0px 27px 0px 0px;
-    }
-    .calendar__btn-prev::before {
-      font-size: 16px;
-      transform: rotate(-90deg);
-    }
-    .calendar__btn-prev:hover::before {
-      color: green;
-    }
-    .calendar__btn-next {
-      width: 24px;
-      height: 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .calendar__btn-next::before {
-      font-size: 16px;
-      transform: rotate(90deg);
-    }
-    .calendar__btn-next:hover::before {
-      color: green;
-    }
-    .calendar__days {
+    .calendar__days, .calendar__main {
       display: grid;
-      column-gap: 35px;
+      row-gap:  2px;
+      column-gap: 1px;
       grid-template-columns: repeat(7, 1fr);
-      margin: 0px 0px 16px 0px;
     }
-    .calendar__main {
-      display: grid;
-      column-gap: 35px;
-      row-gap: 16px;
-      grid-template-columns: repeat(7, 1fr);
-      grid-template-rows: repeat(5, min(32px));
-    }
-    
     .cal_date .cell_item {
       cursor: pointer;
-      min-width: 32px;
-      min-height: 32px;
     }
-    
     .cell_wrapper {
-      display: flex;
-      justify-content: center;
+      display: inline-flex;
       align-items: center;
+      justify-content: center;
+      position: relative;
+      box-sizing: border-box;
+      cursor: pointer;
+      user-select: none;
+      vertical-align: middle;
+      appearance: none;
+      text-decoration: none;
+      font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+      font-weight: 400;
+      font-size: 0.75rem;
+      line-height: 1.66;
+      letter-spacing: 0.03333em;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: transparent;
+      margin: 0px 2px;
     }
     .cell_wrapper .cell_item {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-width: 32px;
-      position: relative;
-      font-weight: 400;
-      font-size: 16px;
-      border-radius: 50%;
-      color: rgba(49, 49, 49, 0.5);
+      margin-top: 3px;
+      color: rgba(0, 0, 0, .5);
     }
-    .cell_wrapper.active .cell_item {
-      background: #efa021;
-      color: #ffffff;
+    .calendar__days .cell_wrapper .cell_item {
+      color: rgba(0, 0, 0, .7);
+      cursor: text;
     }
-    
+    .calendar__main .cell_wrapper.cal_date.current:hover {
+      background-color: lightgrey;
+    }
+    .cell_wrapper.active {
+      border:  1px solid darkgray;
+    }
     .current .cell_item {
-      color: #111111;
+      color: rgba(0, 0, 0, .9);
     }
-    
     .hidden {
       visibility: hidden;
     }
-    
+    .calendar-btn {
+      display: inline-flex;
+      height:  36px;
+      width:  36px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50px;
+      background: transparent;
+      border: 0;
+      margin-left: 2px;
+    }
+    .calendar-btn:hover {
+      background-color: lightgrey;
+    }
+    .calendar-btn svg {
+      height:  24px;
+      width:  24px;
+    }
     </style>
 
     <div class="tabs-transmit-readings__calendar calendar">
@@ -163,8 +135,20 @@ class FlexyCalendar extends HTMLElement {
       <div class="calendar__content hidden">
         <div class="calendar__header">
           <span></span>
-          <button class="calendar__btn-prev calendar-btn _icon-arrow-slider"></button>
-          <button class="calendar__btn-next calendar-btn _icon-arrow-slider"></button>
+          <button class="calendar__btn-prev calendar-btn" tabindex="0" type="button" title="Previous month" aria-label="Previous month">
+            <svg focusable="false" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"
+                fill="black" fill-opacity="0.5">
+              </path>
+            </svg>
+          </button>
+          <button class="calendar__btn-prev calendar-btn" tabindex="0" type="button" title="Next month" aria-label="Next month">
+            <svg focusable="false" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
+                fill="black" fill-opacity="0.5">
+              </path>
+            </svg>
+          </button>
         </div>
         <div class="calendar__wrapper">
           <div class="calendar__days"></div>
@@ -180,39 +164,44 @@ class FlexyCalendar extends HTMLElement {
     }
     this.state = {} 
     flexyCalendarContainer.innerHTML = template;
-    this.flexyCalendarContainer = flexyCalendarContainer
     shadow.appendChild(flexyCalendarContainer);
+    this.attributeChangedCallback = this.attributeChangedCallback.bind(this)
   }
   connectedCallback() {
     console.log('connectedCallback')
     this.setHTMLElements()
     this.init()
-    this.testChangeMonth()
   }
 
   disconnectedCallback(){
     console.log('disconnectedCallback')
   }
-  attributeChangedCallback(){
-    console.log('attributeChangedCallback')
+
+  static get observedAttributes() { return ['date']; }
+  
+  attributeChangedCallback(name, oldValue, newValue){
+    console.log({name, oldValue, newValue})
+    if (name === 'date' && this.state.cellsData){
+      const changedDate = new Date(newValue);
+      const year = changedDate.getFullYear();
+      const month = changedDate.getMonth();
+      this.updateState(SET_DATE, {year, month, date: changedDate.getDate()})
+      this.updateState(SET_CELLS_DATA, this.getCalendarCellsData())
+      const index = this.state.cellsData.findIndex((e, i) => {
+        return e.date === this.state.selected.date && e.monthOffset === CURRENT
+      })
+      this.removeActive()
+      this.state.selected.cell = this.ui.calendar.children[index]
+      this.updateCalendarUI()
+      this.dispatchChangeDateEvant()
+    }
   }
 
-  testChangeMonth(){
-    const {year: oldYear, month: oldMonth} = this.state.current
-    const btnNext = document.createElement('button')
-    const btnPrev = document.createElement('button')
-    btnNext.classList.add('calendar__btn-next')
-    btnPrev.classList.add('calendar__btn-prev')
-    this.changeMonth(btnNext)
-    const {year: newYear, month: newMonth} = this.state.current
-    this.changeMonth(btnPrev)
-    if (oldMonth >= newMonth)console.log('TEST FAILED')
-  }
-  
   updateState(action, payload){
     switch(action){
       case INIT_STATE: {
-        const date = new Date();
+        const dateAttr =  this.getAttribute('date')
+        const date = dateAttr ? new Date(dateAttr) : new Date();
         const year = date.getFullYear();
         const month = date.getMonth();
         this.state.current = { 
@@ -220,6 +209,7 @@ class FlexyCalendar extends HTMLElement {
           year,
           isPopup: false
         }
+        this.state.cellsData = []
         this.state.selected = {
             date: date.getDate(), 
             month,
@@ -236,6 +226,18 @@ class FlexyCalendar extends HTMLElement {
         this.state.selected.cell = cell
         break
       }
+      case SET_DATE: {
+        const {month, year, date} = payload
+        if (!this.state.current) break
+        this.state.selected.month = this.state.current.month = month
+        this.state.selected.year = this.state.current.year = year
+        this.state.selected.date = date
+        break
+      }
+      case SET_CELLS_DATA: {
+        this.state.cellsData = payload
+        break
+      }      
       case SHIFT_MONTH: {
         const offset = payload
         const {year, month} = this.getNearbyMonth(offset)
@@ -274,11 +276,31 @@ class FlexyCalendar extends HTMLElement {
     const size = this.getSizeOfMonth({year, month})
     const prevSize = this.getSizeOfMonth(this.getNearbyMonth(PREV))
     const nextSize = this.getSizeOfMonth(this.getNearbyMonth(NEXT))
-    const prevMonthNumbers = getTail(getNumbers(prevSize), date.getDay())
+    const firstDayOffset = getRolledIndex(DAY_NAMES.length, date.getDay() - FIRST_WEEK_DAY )
+    const prevMonthNumbers = firstDayOffset ? getTail(getNumbers(prevSize), firstDayOffset) : []
     const currMonthNumbers = getNumbers(size)
-    const nextMonthNumbers = getHead(getNumbers(nextSize), 
-      CELLS - (prevMonthNumbers.length + currMonthNumbers.length))
-    return [...prevMonthNumbers, ...currMonthNumbers, ...nextMonthNumbers]
+    const nextMonthDaysCount = CELLS - (prevMonthNumbers.length + currMonthNumbers.length)
+    const nextMonthNumbers = getHead(getNumbers(nextSize), nextMonthDaysCount)
+    return [
+      ...prevMonthNumbers.map(date => ({date, monthOffset: PREV})), 
+      ...currMonthNumbers.map(date => ({date, monthOffset: CURRENT})),
+      ...nextMonthNumbers.map(date => ({date, monthOffset: NEXT})),
+    ]
+  }
+
+  setDateAttribute(){
+    const {year, month, date} = this.state.selected
+    this.setAttribute('date', `${month+1}/${date}/${year}`)
+  }
+
+  dispatchChangeDateEvant(){
+    const {year, month, date} = this.state.selected  
+    const changeDate = new CustomEvent("changedate", {
+      detail: {
+        date: `${month+1}/${date}/${year}`,
+      },
+    });
+    this.dispatchEvent(changeDate)
   }
 
   setDateToInput(){
@@ -292,12 +314,13 @@ class FlexyCalendar extends HTMLElement {
   };
 
   setCalendarBody(){
-    const data = this.getCalendarCellsData()
+    this.updateState(SET_CELLS_DATA, this.getCalendarCellsData())
     for (let i = 0; i < CELLS; i++) { 
       const div = this.ui.calendar.children[i]
       const span = div.children[0]
-      this.incudeClassByCondition(div, 'current', this.getOffsetMonth(data, i) === CURRENT)
-      span.innerText = data[i]
+      const {monthOffset, date} = this.state.cellsData[i]
+      this.incudeClassByCondition(div, 'current', monthOffset === CURRENT)
+      span.innerText = date
     }
     this.showSelectedCellIfNeed()
   };
@@ -315,9 +338,8 @@ class FlexyCalendar extends HTMLElement {
     if (!cell) return
     this.updateState(SELECT_DATE, cell)
     this.setDateToInput()
-    const isActive = cell.classList.contains('active')
-    const index = Array.from(this.ui.calendar.children).findIndex((el) => el === cell) 
-    const dayOfWeek = `${index % 7}`
+    this.setDateAttribute()
+    this.dispatchChangeDateEvant()
   };
 
   removeActive(){
@@ -332,7 +354,6 @@ class FlexyCalendar extends HTMLElement {
     this.ui.calendar.addEventListener('click', ({target}) => {
       this.removeActive()
       const cell = target.closest('.cal_date')
-      
       this.setActive(cell)
       this.selectOnClick(cell);
     }) 
@@ -347,22 +368,23 @@ class FlexyCalendar extends HTMLElement {
     return CURRENT
   }
 
-  setDaysPlaceholders(monthDetails){
-    const data = this.getCalendarCellsData()
+  setDaysPlaceholders(){
+    this.updateState(SET_CELLS_DATA, this.getCalendarCellsData())
     for (let i = 0; i < CELLS; i++) {
       let div = document.createElement("div"),
           span = document.createElement("span");
       div.classList.add("cell_wrapper");
       div.classList.add("cal_date");
-      if(this.getOffsetMonth(data, i) === CURRENT){
+      const {date, monthOffset} = this.state.cellsData[i]
+      if(monthOffset === CURRENT){
         div.classList.add("current");
-        if (this.state.selected.date === data[i]){
+        if (this.state.selected.date === date){
           this.setActive(div)
           this.state.selected.cell = div
         }  
       }
       span.classList.add("cell_item");
-      span.innerText = data[i]
+      span.innerText = date
       div.appendChild(span);
       this.ui.calendar.appendChild(div);
     }
@@ -377,8 +399,9 @@ class FlexyCalendar extends HTMLElement {
   }
 
   updateCalendarUI(){
-    this.setCalendarHeader();
-    this.setCalendarBody();
+    this.setDateToInput()
+    this.setCalendarHeader()
+    this.setCalendarBody()
   }
 
   setCalendarDays(){
@@ -387,7 +410,7 @@ class FlexyCalendar extends HTMLElement {
           span = document.createElement("span");
       div.classList.add("cell_wrapper");
       span.classList.add("cell_item");
-      span.innerText = DAY_NAMES[i].slice(0, 2);
+      span.innerText = DAY_NAMES[getRolledIndex(DAY_NAMES.length, i + FIRST_WEEK_DAY)]
       div.appendChild(span);
       this.ui.calDays.appendChild(div);
     }        
@@ -398,6 +421,20 @@ class FlexyCalendar extends HTMLElement {
     this.ui.input = this.shadowRoot.querySelector("#date");
     this.ui.calHeaderTitle = this.shadowRoot.querySelector(".calendar__header span");
     this.ui.calDays = this.shadowRoot.querySelector(".calendar__days");
+  }
+
+  hideCalendar(){
+    this.shadowRoot.querySelector('.calendar__content').classList.add('hidden')
+    this.ui.backDrop.remove()
+    this.state.current.isPopup = false
+  }
+
+  showCalendar(){
+    this.shadowRoot.querySelector('.calendar__content').classList.remove('hidden')
+    this.showCalendarPopup = true
+    this.ui.backDrop = document.createElement('div')
+    this.ui.backDrop.classList.add('backdrop')
+    this.parentNode.parentNode.insertBefore(this.ui.backDrop, this.parentNode)
   }
 
   init(){
@@ -417,27 +454,16 @@ class FlexyCalendar extends HTMLElement {
     this.ui.input.addEventListener('click', () => {
       if (this.state.current.isPopup === true) return
       this.state.current.isPopup = true
-      this.shadowRoot.querySelector('.calendar__content').classList.remove('hidden')
-      this.showCalendarPopup = true
-      this.ui.backDrop = document.createElement('div')
-      this.ui.backDrop.classList.add('backdrop')
-      this.parentNode.parentNode.insertBefore(this.ui.backDrop, this.parentNode)
+      this.showCalendar()
     });
     
     window.addEventListener('click', ({target, currentTarget}) => {
-      if (target.tagName !== this.tagName){
-        this.shadowRoot.querySelector('.calendar__content').classList.add('hidden')
-        this.ui.backDrop.remove()
-        this.state.current.isPopup = false
+      if (this.state.current.isPopup && target.tagName !== this.tagName){
+        this.hideCalendar()
       }
     })
-  
-
   }
-
 }
-
-
 
 customElements.define('flexy-calendar', FlexyCalendar);
 })();

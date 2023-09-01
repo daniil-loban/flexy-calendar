@@ -7,25 +7,16 @@
     <script src="calendar.js"></script>
   </head>
   <body>
-    Lorem ipsum dolor sit amet consectetur adipisicing elit. Rerum odit voluptatum doloremque temporibus, dolore dolor distinctio culpa pariatur voluptatibus eos reprehenderit optio nam ut totam cupiditate inventore! Assumenda, ab iusto.
-    <flexy-calendar>
-
+    <h1>Выберите дату</h1>
+    <flexy-calendar date="1/01/2023">
       
     </flexy-calendar>
-    Lorem ipsum dolor sit amet consectetur adipisicing elit. Exercitationem repudiandae voluptas sequi perspiciatis amet. A error libero nulla, neque non ipsum quasi, perspiciatis quisquam corporis excepturi dolorem incidunt repellendus eligendi?
-    
     <script>
-      /*
-      Object.entries({
-        '4': '_active-wek-fifth',
-        '5': '_active-wek-sixth',
-        '6': '_active-wek-seventh'
-        }).forEach(([k, v]) => {
-          const test = isActive && dayOfWeek === k
-          const action = test ? 'add' : 'remove'
-          document.documentElement.classList[action](v)
-        })
-      */  
+      const h1 = document.querySelector('h1')
+      const fc = document.querySelector('flexy-calendar')
+      fc. addEventListener('changedate', (e) => {
+        h1.textContent = new Date(e.detail.date).toDateString()
+      })
     </script>
   </body>
 </html>
