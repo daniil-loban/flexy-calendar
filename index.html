@@ -14,9 +14,18 @@
     <script>
       const h1 = document.querySelector('h1')
       const fc = document.querySelector('flexy-calendar')
-      fc. addEventListener('changedate', (e) => {
+      fc.addEventListener('changedate', (e) => {
         h1.textContent = new Date(e.detail.date).toDateString()
       })
+     
+      fc.addEventListener('waitplugins', ({detail:{cb}}) => {
+        class Plugin_FC_MonthsYears {
+        }
+        cb({Plugin_FC_MonthsYears})
+      })
+      fc.setAttribute('plugins', '')
+
+
     </script>
   </body>
 </html>
