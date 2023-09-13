@@ -1,3 +1,5 @@
+const INSERT_BEFORE = -1, REPLACE =  0, INSERT_AFTER =  1;
+
 (function() {
 const MONTH_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]  
 const MAX_MONTH_LEN = Math.max.apply(null, MONTH_DAYS)
@@ -131,6 +133,9 @@ const defaultTemplate = `
   <div class="calendar__content hidden">
     <div class="calendar__header">
       <span></span>
+      
+      
+
       <button class="calendar__btn-prev calendar-btn" tabindex="0" type="button" title="Previous month" aria-label="Previous month">
         <svg focusable="false" aria-hidden="true" viewBox="0 0 24 24">
           <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"
@@ -257,6 +262,11 @@ class CalendarModel {
     this.updateState(SELECT_DATE, +textDateNum)
   }
 
+  setDate({year, month, date}){
+    this.updateState(SET_DATE, {year, month, date})
+    this.updateState(SET_CELLS_DATA, this.getCalendarCellsData())
+  }
+
   setCalendarDate(newDate){
     const year = newDate.getFullYear()
     const month = newDate.getMonth()
@@ -325,11 +335,11 @@ class FlexyCalendar extends HTMLElement {
   constructor() {
     super()
     const shadow = this.attachShadow({ mode: 'open' })
-    const flexyCalendarContainer = document.createElement('div')
-    flexyCalendarContainer.classList.add('flexy-calendar')
     const template = defaultTemplate
-    flexyCalendarContainer.innerHTML = template
-    shadow.appendChild(flexyCalendarContainer)
+    this.flexyCalendarContainer = document.createElement('div')
+    this.flexyCalendarContainer.classList.add('flexy-calendar')
+    this.flexyCalendarContainer.innerHTML = template
+    shadow.appendChild(this.flexyCalendarContainer)
     this.config = defaultConfig
     this.model = new CalendarModel(defaultConfig)
     this.eventManager = new EventManager()
@@ -416,13 +426,50 @@ class FlexyCalendar extends HTMLElement {
     this.dispatchEvent(changeDate)
   }
 
-  attachPlugins(arg){
-    console.log('attachPlugins:', arg)
+  insertAfter(newNode, existingNode) {
+    existingNode.parentNode.insertBefore(newNode, existingNode.nextSibling);
+  }
+
+
+  injectHTML(document, plugin){
+    const modifiers = plugin.getTemplateModifiers()
+    for (const {type, targetTag, html, uiName, uiSelector} of modifiers) {
+      if (type === INSERT_AFTER){
+        const existingNode = this.shadowRoot.querySelector(targetTag)
+        const div = document.createElement('div')
+        this.insertAfter(div, existingNode)
+        div.outerHTML = html
+        this.ui[uiName] = this.shadowRoot.querySelector(uiSelector)
+      }
+    }
+  }
+
+  injectEvents(plugin){
+    const events = plugin.getEvents()
+    for (const { element, event, handler } of events) {
+      this.eventManager.add(
+        this.ui[element], 
+        event, 
+        plugin[handler].bind(this)
+      )
+    }
+  }
+
+  inject(plugin){
+    this.injectHTML(document, plugin)
+    this.injectEvents(plugin)
+  }
+
+  attachPlugins(plugins){
+    console.log('attachPlugins:', plugins)
+    for (const plugin of plugins) {
+      this.inject(new plugin())
+    }
   }
 
   dispatchWaitPluginsEvent(){
     const waitPlugins = new CustomEvent("waitplugins", {
-      detail: { cb: this.attachPlugins}
+      detail: { cb: this.attachPlugins.bind(this)}
     })
     this.dispatchEvent(waitPlugins)
   }

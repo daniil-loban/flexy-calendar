@@ -9,23 +9,46 @@
   <body>
     <h1>Выберите дату</h1>
     <flexy-calendar date="1/01/2023">
-      
+
     </flexy-calendar>
     <script>
+      class Plugin_FC_TODAY_BTN {
+        getTemplateModifiers(){
+          return [
+            {
+              targetTag: '.calendar__btn-prev',
+              type: INSERT_AFTER,
+              html: `<button class="today-btn">Today</button>`,
+              uiName: 'todayBtn',
+              uiSelector: '.today-btn' 
+            }
+          ]  
+        }
+        getEvents(){
+          return [
+            { element:  'todayBtn',  event: 'click',  handler: 'gotoToday' }
+          ]
+        }
+        gotoToday(){
+          const changedDate = new Date()
+          this.model.setCalendarDate(changedDate)
+          const index = this.model.cellsData.findIndex(e => 
+            e.date === this.model.selectedDate && e.monthOffset === 0)
+          this.selectCalendarCellByIndex(index)
+          this.removeActive()
+          this.updateCalendarUI()
+        }
+      }
+
       const h1 = document.querySelector('h1')
       const fc = document.querySelector('flexy-calendar')
       fc.addEventListener('changedate', (e) => {
         h1.textContent = new Date(e.detail.date).toDateString()
       })
-     
       fc.addEventListener('waitplugins', ({detail:{cb}}) => {
-        class Plugin_FC_MonthsYears {
-        }
-        cb({Plugin_FC_MonthsYears})
+        cb([Plugin_FC_TODAY_BTN])
       })
       fc.setAttribute('plugins', '')
-
-
     </script>
   </body>
 </html>
