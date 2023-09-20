@@ -21,7 +21,7 @@ export const defaultTemplate = `
 .calendar__content {
   position: absolute;
   z-index: 1;
-  right: 0;
+  left: max(calc(100% - 335px ), 0px);
   padding: 25px;
   width: auto;
   background: #f8f8f8;
