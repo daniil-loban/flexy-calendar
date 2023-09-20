@@ -4,21 +4,35 @@
     <meta charset="utf-8">
     <title></title>
     <link rel="stylesheet" href="calendar.css">
-    <script src="calendar.js"></script>
+    <script src="calendar/calendar.js"></script>
   </head>
   <body>
     <h1>Выберите дату</h1>
-    <flexy-calendar date="1/01/2023">
+    <flexy-calendar date="1/01/2023"></flexy-calendar>
+    <flexy-calendar></flexy-calendar>
 
-    </flexy-calendar>
-    <script>
+    <script type="module">
+      import { INSERT_AFTER, INSERT_BEFORE, SUNDAY,
+        API_GOTO_DATE, API_SHOW_CALENDAR 
+      } from "./calendar/constants.mjs";
+
       class Plugin_FC_TODAY_BTN {
         getTemplateModifiers(){
           return [
             {
               targetTag: '.calendar__btn-prev',
               type: INSERT_AFTER,
-              html: `<button class="today-btn">Today</button>`,
+              html: `<style>
+                  .today-btn {
+                    border: 0;
+                    border-radius: 5px;
+                    background: transparent;
+                  }
+                  .today-btn:hover {
+                    background: rgba(0,0,0,.2);
+                  }
+                </style>
+                <button class="today-btn">Today</button>`,
               uiName: 'todayBtn',
               uiSelector: '.today-btn' 
             }
@@ -30,13 +44,51 @@
           ]
         }
         gotoToday(){
-          const changedDate = new Date()
-          this.model.setCalendarDate(changedDate)
-          const index = this.model.cellsData.findIndex(e => 
-            e.date === this.model.selectedDate && e.monthOffset === 0)
-          this.selectCalendarCellByIndex(index)
-          this.removeActive()
-          this.updateCalendarUI()
+          //this.goToDate(new Date())
+          this.callAPI(API_GOTO_DATE, new Date())
+        }
+        updateLocale(){
+          return {
+            dayNames: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+            monthsNames: ["Jan", "Feb", "Mar", "Apr",
+            "May", "Jun", "Jul", "Aug",
+            "Sep", "Oct", "Nov", "Dec"]
+          }
+        }
+        updateConfig(){
+          return {
+            firstWeekDay: SUNDAY
+          }
+        }
+      }
+
+      class Plugin_FC_SHOW_CALENDAR {
+        getTemplateModifiers(){
+          return [
+            {
+              targetTag: '.calendar__input._icon-calendar',
+              type: INSERT_BEFORE,
+              html: `
+                <style>
+                  .active {
+                    background: yellow;
+                  }
+                </style>
+                <button class="show-calendar">Show Calendar</button>
+              `,
+              uiName: 'showCalendarBtn',
+              uiSelector: '.show-calendar' 
+            }
+          ]  
+        }
+        getEvents(){
+          return [
+            { element:  'showCalendarBtn',  event: 'click',  handler: 'showCalendar' }
+          ]
+        }
+        showCalendar(){
+          //this.showCalendar()
+          this.callAPI(API_SHOW_CALENDAR)
         }
       }
 
@@ -46,9 +98,10 @@
         h1.textContent = new Date(e.detail.date).toDateString()
       })
       fc.addEventListener('waitplugins', ({detail:{cb}}) => {
-        cb([Plugin_FC_TODAY_BTN])
+        cb([Plugin_FC_TODAY_BTN, Plugin_FC_SHOW_CALENDAR])
       })
       fc.setAttribute('plugins', '')
+
     </script>
   </body>
 </html>
