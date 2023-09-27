@@ -29,7 +29,6 @@ The main goal of the project is to popularize web components and the plugin appr
 
 For react just copy the calendar folder in project.
 
-`
 
     import logo from './logo.svg';
     import { useEffect, useRef, useState } from 'react';
@@ -65,4 +64,3 @@ For react just copy the calendar folder in project.
     }
 
     export default App;
-`
