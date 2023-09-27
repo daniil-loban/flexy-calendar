@@ -17,15 +17,15 @@ const SET_CELLS_DATA = 'SET_CELLS_DATA'
 
 export class CalendarModel {
   constructor(config){
-    this.config = config ?? defaultConfig
+    this.config = config
     this.locale = CalendarModel.getLocaleAccessors(config)
     this.initialized = false
     this.state = {} 
   }
 
   static getLocaleAccessors(config){
-    const {dayNames, monthsNames} = config.locale ?? defaultConfig.locale
-    const {firstWeekDay} = config ?? defaultConfig
+    const {dayNames, monthsNames} = config.locale
+    const {firstWeekDay} = config
     return {
       getMonthName: (index)=> monthsNames[index],
       getDayName: (index)=> dayNames[getRolledIndex(WEEK_SIZE, index + firstWeekDay)]
@@ -75,6 +75,9 @@ export class CalendarModel {
         this.state.current.month = month
         this.state.current.year = year            
       }
+        break
+      default:
+        break
     }
   }
 

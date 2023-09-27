@@ -10,3 +10,7 @@ export function insertAfter(newNode, existingNode) {
 export function insertBefore(newNode, existingNode) {
   existingNode.parentNode.insertBefore(newNode, existingNode);
 }
+
+export function childIndex(element){
+  return Array.from(element.parentNode.children).findIndex(el => el === element)
+}

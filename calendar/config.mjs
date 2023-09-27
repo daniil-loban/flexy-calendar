@@ -107,10 +107,9 @@ export const defaultTemplate = `
   width:  24px;
 }
 </style>
-<div class="tabs-transmit-readings__calendar calendar">
+<div class="calendar">
   <div class="calendar__input  _icon-calendar">
     <input autocomplete="off" type="text" id="date" class="onFocus" readonly>
-    <slot name="num"></slot>
   </div>
   <div class="calendar__content hidden">
     <div class="calendar__header">

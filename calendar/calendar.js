@@ -132,8 +132,18 @@ class FlexyCalendar extends HTMLElement {
     const div = this.ui.calendar.children[index]
     const span = div.children[0]
     const {monthOffset, date} = this.model.cellsData[index]
-    span.innerText = date
-    this.incudeClassByCondition(div, 'current', monthOffset === CONST.CURRENT)
+    if (this.config.onCellPaint){
+      this.config.onCellPaint({
+        index,
+        cell: div,
+        data: this.model.cellsData[index],
+        month: this.model.currentMonth,
+        year: this.model.currentYear,
+      })
+    } else {
+      span.innerText = date
+      this.incudeClassByCondition(div, 'current', monthOffset === CONST.CURRENT)
+    }
   }
 
   setCalendarBody(){
@@ -188,11 +198,12 @@ class FlexyCalendar extends HTMLElement {
       const active = current && this.model.selectedDate === date ? 'active' : ''
       const div = this.ui.calendar.appendChild(document.createElement("div"))
       div.outerHTML = `
-        <div class="cell_wrapper cal_date ${current} ${active}">
-          <span class="cell_item">${date}</span>
-        </div>`
+      <div class="cell_wrapper cal_date ${current} ${active}">
+        <span class="cell_item"></span>
+      </div>`
       if (active) this.selectCalendarCellByIndex(i)
     }
+    this.setCalendarBody()
   }
 
   showSelectedCellIfNeed(){
@@ -245,6 +256,30 @@ class FlexyCalendar extends HTMLElement {
   prevMonth(){
     this.model.changeMonth(CONST.PREV)
   }
+  getMonth(){
+    return this.model.selectedMonth
+  }
+  setMonth(monthIndex){
+    const year = this.model.selectedYear
+    const date =  this.model.selectedDate
+    this.goToDate(new Date(year, monthIndex, date))
+  }
+  getYear(){
+    return this.model.selectedYear
+  }
+  setYear(year){
+    const month = this.model.selectedMonth
+    const date =  this.model.selectedDate
+    this.goToDate(new Date(year, month, date))
+  }
+  showPrevMonth(){
+    this.prevMonth()
+    this.updateCalendarUI()
+  }
+  showNextMonth(){
+    this.nextMonth()
+    this.updateCalendarUI()
+  }
   ///////////
 
   setHTMLElements(){
@@ -265,7 +300,8 @@ class FlexyCalendar extends HTMLElement {
   }
 
   addEventsToInput(){
-    this.eventManager.add(this.ui.input, 'click',() => this.showCalendar())}
+    this.eventManager.add(this.ui.input, 'click',() => this.showCalendar())
+  }
 
   addEventsToWindow(){
     this.eventManager.add(window, 'click', ({target}) => this.hideCalendar(target))
@@ -274,5 +310,6 @@ class FlexyCalendar extends HTMLElement {
 
 Object.assign(FlexyCalendar.prototype, PluginManagerMixin)
 Object.assign(FlexyCalendar.prototype, APIMixin)
+
 customElements.define('flexy-calendar', FlexyCalendar)
 })();

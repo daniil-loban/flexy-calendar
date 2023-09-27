@@ -1,9 +1,7 @@
-
 flexy-calendar {
   display: inline-block;
   margin-bottom: 5px;
 }
-
 
 .flexy__calendar-backdrop {
   position: fixed;

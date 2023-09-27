@@ -9,99 +9,26 @@
   <body>
     <h1>Выберите дату</h1>
     <flexy-calendar date="1/01/2023"></flexy-calendar>
-    <flexy-calendar></flexy-calendar>
-
+    <flexy-calendar id="second"></flexy-calendar>
     <script type="module">
-      import { INSERT_AFTER, INSERT_BEFORE, SUNDAY,
-        API_GOTO_DATE, API_SHOW_CALENDAR 
-      } from "./calendar/constants.mjs";
-
-      class Plugin_FC_TODAY_BTN {
-        getTemplateModifiers(){
-          return [
-            {
-              targetTag: '.calendar__btn-prev',
-              type: INSERT_AFTER,
-              html: `<style>
-                  .today-btn {
-                    border: 0;
-                    border-radius: 5px;
-                    background: transparent;
-                  }
-                  .today-btn:hover {
-                    background: rgba(0,0,0,.2);
-                  }
-                </style>
-                <button class="today-btn">Today</button>`,
-              uiName: 'todayBtn',
-              uiSelector: '.today-btn' 
-            }
-          ]  
-        }
-        getEvents(){
-          return [
-            { element:  'todayBtn',  event: 'click',  handler: 'gotoToday' }
-          ]
-        }
-        gotoToday(){
-          //this.goToDate(new Date())
-          this.callAPI(API_GOTO_DATE, new Date())
-        }
-        updateLocale(){
-          return {
-            dayNames: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
-            monthsNames: ["Jan", "Feb", "Mar", "Apr",
-            "May", "Jun", "Jul", "Aug",
-            "Sep", "Oct", "Nov", "Dec"]
-          }
-        }
-        updateConfig(){
-          return {
-            firstWeekDay: SUNDAY
-          }
-        }
-      }
-
-      class Plugin_FC_SHOW_CALENDAR {
-        getTemplateModifiers(){
-          return [
-            {
-              targetTag: '.calendar__input._icon-calendar',
-              type: INSERT_BEFORE,
-              html: `
-                <style>
-                  .active {
-                    background: yellow;
-                  }
-                </style>
-                <button class="show-calendar">Show Calendar</button>
-              `,
-              uiName: 'showCalendarBtn',
-              uiSelector: '.show-calendar' 
-            }
-          ]  
-        }
-        getEvents(){
-          return [
-            { element:  'showCalendarBtn',  event: 'click',  handler: 'showCalendar' }
-          ]
-        }
-        showCalendar(){
-          //this.showCalendar()
-          this.callAPI(API_SHOW_CALENDAR)
-        }
-      }
-
+      import {
+        applyPlugin,
+        Plugin_FC_TODAY_BTN,
+        Plugin_FC_SHOW_CALENDAR,
+        Plugin_FC_SELF_PAINT,
+        Plugin_FC_TABS
+      } from './calendar/plugins/index.js'
+      
       const h1 = document.querySelector('h1')
-      const fc = document.querySelector('flexy-calendar')
-      fc.addEventListener('changedate', (e) => {
+      applyPlugin(document.querySelector('flexy-calendar'), 
+        Plugin_FC_TODAY_BTN, Plugin_FC_TODAY_BTN, Plugin_FC_TODAY_BTN
+      ).addEventListener('changedate', (e) => {
         h1.textContent = new Date(e.detail.date).toDateString()
       })
-      fc.addEventListener('waitplugins', ({detail:{cb}}) => {
-        cb([Plugin_FC_TODAY_BTN, Plugin_FC_SHOW_CALENDAR])
-      })
-      fc.setAttribute('plugins', '')
 
+      applyPlugin(document.getElementById('second'),
+        Plugin_FC_SELF_PAINT, Plugin_FC_TABS
+      )
     </script>
   </body>
 </html>
