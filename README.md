@@ -5,8 +5,8 @@ The main goal of the project is to popularize web components and the plugin appr
     .
     ├── calendar
     │   ├── base
-    │   │   └── base_plugin.mjs  // base class for plugins in development
-    │   ├── calendar.js          // main class of the webcomponent  
+    │   │   └── base_plugin.mjs  // a base class for plugins in development
+    │   ├── calendar.js          // a main class of the webcomponent  
     │   ├── calendar_model.mjs   // a model of data for ui 
     │   ├── config.mjs           // default config for a webcomponent instance
     │   ├── constants.mjs        // some global constants with API names 
